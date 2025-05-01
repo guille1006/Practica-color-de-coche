@@ -1,10 +1,14 @@
+from collections import defaultdict
+
 class Pyurification:
     def __init__(self, df, v_depend=False, col_depend=False, col_cat=[], umbral_cat=0.05):
         self.df = df
         self.len = len(df)
         self.uniques = {}
         self.cols = df.columns
-        self.umbral_cat = 
+        self.umbral_cat = umbral_cat
+
+        self.posible_null_values = defaultdict(set)
 
 
 # Guardado de las variables dependientes e independientes -------------------------------------
@@ -32,7 +36,7 @@ class Pyurification:
         self.col_num = []
         self.select_type_variables(col_cat)
 #---------------------------------------------------------------------------------
-    def select_type_variables(self, col_cat):
+    def select_type_variables(self):
         # Ademas de guardar cada columna en su tipo de variable, guarda clos valores unicos en self.uniques
         col_to_analyze = self.cols
        
@@ -45,11 +49,38 @@ class Pyurification:
                 self.df[col] = self.dicotom_to_number(self.df[col])
 
             elif self.uniques[col] > self.umbral_cat*self.len:
+                self.col_num.append(col)
+                self.summarize_not_num(self.df[col], col)
+
+            else:
+                self.col_cat.append(col)
 
                 
                
+#---------------------------------------------------------------------------------
+    def summarize_not_num(self, series, col):
+        tipo = series.dtype
+        tipos_numericos = [
+            # Tipos nativos de Python
+            int,
+            float,
+            complex,
 
+            # Tipos NumPy (enteros con y sin signo)
+            'int8', 'int16', 'int32', 'int64',
+            'uint8', 'uint16', 'uint32', 'uint64',
 
+            # Tipos NumPy (decimales)
+            'float16', 'float32', 'float64', 'float128',  # float128 no siempre disponible
+
+            # Tipos NumPy (complejos)
+            'complex64', 'complex128', 'complex256',      # complex256 depende del sistema
+        ]
+
+        if tipo not in tipos_numericos:
+            for elemenent in series:
+                if elemenent not in tipos_numericos:
+                    self.posible_null_values[col].add(elemenent)
 
 #---------------------------------------------------------------------------------
     def dicotom_to_number(self, series):
@@ -59,6 +90,10 @@ class Pyurification:
 
 
 #---------------------------------------------------------------------------------
+    def show_col_types(self):
+        
+#---------------------------------------------------------------------------------
+
     def show_frecuencys(self, n_groups_max=250):
         resultados = {}
         frecuencias = []
