@@ -6,3 +6,4 @@ df = pd.DataFrame({
 })
 
 df.index = ['fila1', 'fila2']
+print(df)

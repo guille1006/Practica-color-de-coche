@@ -1,4 +1,5 @@
 from collections import defaultdict
+import pandas as pd
 
 class Pyurification:
     def __init__(self, df, v_depend=False, col_depend=False, col_cat=[], umbral_cat=0.05):
@@ -34,7 +35,8 @@ class Pyurification:
         self.col_dicotom = []
         self.col_cat = []
         self.col_num = []
-        self.select_type_variables(col_cat)
+
+        self.select_type_variables()
 #---------------------------------------------------------------------------------
     def select_type_variables(self):
         # Ademas de guardar cada columna en su tipo de variable, guarda clos valores unicos en self.uniques
@@ -91,7 +93,9 @@ class Pyurification:
 
 #---------------------------------------------------------------------------------
     def show_col_types(self):
-        
+        pass
+
+
 #---------------------------------------------------------------------------------
 
     def show_frecuencys(self, n_groups_max=250):
@@ -101,3 +105,4 @@ class Pyurification:
         columns_showed = [x for x in self.uniques if x<n_groups_max]
 
         for cols in columns_showed:
+            pass
