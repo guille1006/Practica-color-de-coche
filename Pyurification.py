@@ -52,7 +52,7 @@ class Pyurification:
 
             elif self.uniques[col] > self.umbral_cat*self.len:
                 self.col_num.append(col)
-                self.summarize_not_num(self.df[col], col)
+                self.summarize_not_num(col)
 
             else:
                 self.col_cat.append(col)
@@ -60,8 +60,8 @@ class Pyurification:
                 
                
 #---------------------------------------------------------------------------------
-    def summarize_not_num(self, series, col):
-        tipo = series.dtype
+    def summarize_not_num(self, col):
+        tipo = self.df[col].dtype
         tipos_numericos = [
             # Tipos nativos de Python
             int,
@@ -80,9 +80,28 @@ class Pyurification:
         ]
 
         if tipo not in tipos_numericos:
-            for elemenent in series:
+            if self.posible_null_values[col]:
+                del self.posible_null_values[col]
+            for elemenent in self.df[col]:
                 if elemenent not in tipos_numericos:
-                    self.posible_null_values[col].add(elemenent)
+                    try:
+                        int(elemenent)
+                    except ValueError:
+                        self.posible_null_values[col].add(elemenent)
+#---------------------------------------------------------------------------------
+    def change_to_num(self, columnas):
+        if not columnas:
+            print("Debe añadir alguna columna valida")
+            return
+        
+        for col in columnas:
+            if col not in self.col_cat:
+                print(f"La columna {col} no se encuentra en las variables categoricas de los datos inicales")
+                continue
+            else:
+                self.col_cat.remove(col)
+                self.col_num.append(col)
+                self.summarize_not_num(col)
 
 #---------------------------------------------------------------------------------
     def dicotom_to_number(self, series):
@@ -93,16 +112,44 @@ class Pyurification:
 
 #---------------------------------------------------------------------------------
     def show_col_types(self):
-        pass
+        col_types = defaultdict(list)
+        for col in self.cols:
+            if col in self.col_dicotom:
+                col_types[col].append("Dicotomica")
+            elif col in self.col_cat:
+                col_types[col].append("Categoríca")
+            elif col in self.col_num:
+                col_types[col].append("Numeríca")
+
+            col_types[col].append(self.uniques[col])
+
+            if self.posible_null_values[col]:
+                if len(self.posible_null_values[col])>10:
+                   col_types[col].append(f"{len(self.posible_null_values[col])} valores distintos a un numerico. Recomiendo revisión de tipo de variable")
+                else: 
+                    col_types[col].append(self.posible_null_values[col])
+            else: 
+                col_types[col].append(None)
+
+        show = pd.DataFrame(col_types)
+        show.index = ["Tipo", "Valores unicos", "Posibles errores"]
+        return show
 
 
 #---------------------------------------------------------------------------------
 
-    def show_frecuencys(self, n_groups_max=250):
-        resultados = {}
-        frecuencias = []
+    def show_frecuencys(self):
+        resultados = []
        
-        columns_showed = [x for x in self.uniques if x<n_groups_max]
+        columns_showed = self.col_cat
+        for col in columns_showed:
+            serie_con_cada_frecuencia = self.df[col].value_counts()
+            serie_con_porcentaje = self.df[col].value_counts(normalize=True)
 
-        for cols in columns_showed:
-            pass
+            resumen = pd.DataFrame({"n": serie_con_cada_frecuencia,
+                                    "%": serie_con_porcentaje})
+            
+            resultados.append(resumen)
+
+        final = pd.concat(resultados, keys=columns_showed)
+        return final
