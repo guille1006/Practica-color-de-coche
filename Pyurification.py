@@ -1,5 +1,6 @@
 from collections import defaultdict
 import pandas as pd
+import re
 
 class Pyurification:
     def __init__(self, df, v_depend=False, col_depend=False, col_cat=[], umbral_cat=0.05):
@@ -10,6 +11,7 @@ class Pyurification:
         self.umbral_cat = umbral_cat
 
         self.posible_null_values = defaultdict(set)
+        self.extra_elements = defaultdict(set)
 
 
 # Guardado de las variables dependientes e independientes -------------------------------------
@@ -85,7 +87,7 @@ class Pyurification:
             for elemenent in self.df[col]:
                 if elemenent not in tipos_numericos:
                     try:
-                        int(elemenent)
+                        float(elemenent)
                     except ValueError:
                         self.posible_null_values[col].add(elemenent)
 #---------------------------------------------------------------------------------
@@ -109,6 +111,43 @@ class Pyurification:
         val_unicos.sort()
         return series.replace({val_unicos[0]:0, val_unicos[1]:1})
 
+#---------------------------------------------------------------------------------
+    def remove_string_from_num(self, col):
+        # Esto solo funciona con numeros seguidos de letras.
+        self.find_string_in_num(col)
+
+        for extra in self.extra_elements[col]:
+            patron = r'\s*' + re.escape(extra) + r'$'
+            # Primero limpia el texto
+            self.df[col] = self.df[col].astype(str).str.replace(patron, "", regex=True)
+
+            # Luego convierte a float
+            self.df[col] = pd.to_numeric(self.df[col])  # Convertirá valores no convertibles a NaN
+
+#---------------------------------------------------------------------------------
+    def create_variable_dicotomica_from_extra_string(self, col):
+        self.find_string_in_num(col)
+
+        for extra in self.extra_elements[col]:
+            self.df[extra] = self.df[col].astype(str).str.contains(extra).astype(int)
+
+#---------------------------------------------------------------------------------
+    def create_and_remove_string_from_num(self, col):
+        self.create_variable_dicotomica_from_extra_string(col)
+        self.remove_string_from_num(col)
+#---------------------------------------------------------------------------------
+    def find_string_in_num(self,col):
+        # Esto solo funciona con numeros seguidos de letras.
+        if self.extra_elements[col]:
+            del self.extra_elements[col]
+
+        for elements in self.df[col]:
+            match = re.match(r'^\d+(\.\d+)?\s*([a-zA-Z]+)$', elements)
+            if match:
+                numeros = match.group(1)  # '123'
+                letras = match.group(2)   # 'abc'
+                self.extra_elements[col].add(letras)
+        print(self.extra_elements[col])
 
 #---------------------------------------------------------------------------------
     def show_col_types(self):
