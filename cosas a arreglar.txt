@@ -1,0 +1,3 @@
+Lista para arreglar.
+
+    - Cada vez que use el `change_value_in_col()` debo resetear el self.nuniques y el self.posible_null_values

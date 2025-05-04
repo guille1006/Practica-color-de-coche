@@ -1,5 +1,6 @@
 from collections import defaultdict
 import pandas as pd
+import numpy as np
 import re
 
 class Pyurification:
@@ -126,6 +127,8 @@ class Pyurification:
             # Luego convierte a float
             self.df[col] = pd.to_numeric(self.df[col])  # Convertirá valores no convertibles a NaN
 
+
+        self.uniques[col] = self.df[col].nunique()
         self.summarize_not_num(col)
 
 
@@ -157,20 +160,48 @@ class Pyurification:
                 letras = match.group(2)   # 'abc'
                 self.extra_elements[col].add(letras)
 
+#---------------------------------------------------------------------------------
+    def change_value_in_col(self, col, inicial_values=None, condicional_values=None, changed_values=np.NaN):
+        if not inicial_values and not condicional_values:
+            print("No se ha realizado ningun cambio, indica que valores quieres cambiar")
+        
+        if inicial_values:
+            for value in inicial_values:
+                self.df[col] = self.df[col].replace(value, changed_values)
+        
+        if condicional_values:
+            for value in condicional_values:
+                value = value.items()
+
+                if value[0]=="$gt":
+                    self.df[col] = self.df[col].where(self.df[col]>value, changed_values)
+                elif value[0]=="$gte":
+                    self.df[col] = self.df[col].where(self.df[col]>=value, changed_values)
+                elif value[0]=="$lt":
+                    self.df[col] = self.df[col].where(self.df[col]<value, changed_values)
+                elif value[0]=="$lte":
+                    self.df[col] = self.df[col].where(self.df[col]<=value, changed_values)
+
+        self.uniques[col]=self.df[col].nunique()
+        self.summarize_not_num(col)
+
 
 #---------------------------------------------------------------------------------
     def show_col_types(self):
         col_types = defaultdict(list)
         for col in self.cols:
+            # Fila "Tipo"
             if col in self.col_dicotom:
                 col_types[col].append("Dicotomica")
             elif col in self.col_cat:
                 col_types[col].append("Categoríca")
             elif col in self.col_num:
                 col_types[col].append("Numeríca")
-
+            # Fila "Tipo asignado por pandas"
+            col_types[col].append(self.df[col].dtype)
+            # Fila "Valores unicos"
             col_types[col].append(self.uniques[col])
-
+            # Fila "Posibles errores"
             if self.posible_null_values[col]:
                 if len(self.posible_null_values[col])>10:
                    col_types[col].append(f"{len(self.posible_null_values[col])} valores distintos a un numerico. Recomiendo revisión de tipo de variable")
@@ -180,7 +211,7 @@ class Pyurification:
                 col_types[col].append(None)
 
         show = pd.DataFrame(col_types)
-        show.index = ["Tipo", "Valores unicos", "Posibles errores"]
+        show.index = ["Tipo", "Tipo asignado por pandas", "Valores unicos", "Posibles errores"]
         return show
 
 
