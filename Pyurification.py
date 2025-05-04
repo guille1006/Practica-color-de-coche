@@ -80,6 +80,8 @@ class Pyurification:
             # Tipos NumPy (complejos)
             'complex64', 'complex128', 'complex256',      # complex256 depende del sistema
         ]
+        if self.posible_null_values[col]:
+            del self.posible_null_values[col]
 
         if tipo not in tipos_numericos:
             if self.posible_null_values[col]:
@@ -124,12 +126,19 @@ class Pyurification:
             # Luego convierte a float
             self.df[col] = pd.to_numeric(self.df[col])  # Convertirá valores no convertibles a NaN
 
+        self.summarize_not_num(col)
+
+
 #---------------------------------------------------------------------------------
     def create_variable_dicotomica_from_extra_string(self, col):
         self.find_string_in_num(col)
 
         for extra in self.extra_elements[col]:
             self.df[extra] = self.df[col].astype(str).str.contains(extra).astype(int)
+            self.col_dicotom.append(extra)
+            self.uniques[extra] = self.df[extra].nunique()
+        
+        self.cols = self.df.columns
 
 #---------------------------------------------------------------------------------
     def create_and_remove_string_from_num(self, col):
@@ -147,7 +156,7 @@ class Pyurification:
                 numeros = match.group(1)  # '123'
                 letras = match.group(2)   # 'abc'
                 self.extra_elements[col].add(letras)
-        print(self.extra_elements[col])
+
 
 #---------------------------------------------------------------------------------
     def show_col_types(self):
