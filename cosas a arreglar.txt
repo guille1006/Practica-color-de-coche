@@ -1,3 +1,4 @@
 Lista para arreglar.
 
     - Cada vez que use el `change_value_in_col()` debo resetear el self.nuniques y el self.posible_null_values
+    - Cada vez que use el onehotencoder_col debo resetear self.uniques, self posible_null_values, columns 

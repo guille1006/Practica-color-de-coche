@@ -1,4 +1,5 @@
 from collections import defaultdict
+from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
 import numpy as np
 import re
@@ -186,6 +187,11 @@ class Pyurification:
         self.summarize_not_num(col)
 
 
+#---------------------------------------------------------------------------------
+    def onehotencoder_col(self, col):
+        encoder = OneHotEncoder(sparse=False, drop="first")
+        encoded = encoder.fit_transform(self.df[col])
+        encoded_df = pd.DataFrame(encoded, columns=encoder.get_feature_names_out([col]))
 #---------------------------------------------------------------------------------
     def show_col_types(self):
         col_types = defaultdict(list)
