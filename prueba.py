@@ -1,9 +1,6 @@
-import pandas as pd
+import re
+elements = "2.029 turbo"
 
-df = pd.DataFrame({
-    'A': [10, 20],
-    'B': [30, 40]
-})
-
-df.index = ['fila1', 'fila2']
-print(df)
+match = re.match(r'^(\d+)\s*([a-zA-Z]+)$', elements)
+print(match)
+print(match[2])
