@@ -189,9 +189,22 @@ class Pyurification:
 
 #---------------------------------------------------------------------------------
     def onehotencoder_col(self, col):
-        encoder = OneHotEncoder(sparse=False, drop="first")
-        encoded = encoder.fit_transform(self.df[col])
+        encoder = OneHotEncoder(sparse_output=False, drop="first")
+        encoded = encoder.fit_transform(self.df[[col]])
         encoded_df = pd.DataFrame(encoded, columns=encoder.get_feature_names_out([col]))
+
+        # Elimino la columna original
+        self.df.drop(columns=[col], inplace=True)
+
+        # Guardo las columnas onehotencoded en el df
+        self.df = pd.concat([self.df, encoded_df], axis=1)
+#---------------------------------------------------------------------------------
+    def onehotencoder(self, cols=None):
+        if not cols:
+            cols=self.col_cat
+
+        for col in cols:
+            self.onehotencoder_col(col)
 #---------------------------------------------------------------------------------
     def show_col_types(self):
         col_types = defaultdict(list)
